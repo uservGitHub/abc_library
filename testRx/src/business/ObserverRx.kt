@@ -12,6 +12,7 @@ import kotlin.concurrent.thread
 private var INSTACNCE_INDEX = 0
 class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Boolean=true) {
     var ringTBreak:Long = 0L
+    var dump:((String)->Unit)? = null
     private val log:LogBuilder
 
     init {
@@ -42,7 +43,8 @@ class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Bool
         log.reset("single"){
             println("-->endAction")
             CustomScheduler.ALLCS.forEach { it.unHook() }
-            println(log.dump)
+            //println(log.dump)
+            dump?.invoke(log.dump)
         }
         source
                 .doOnDispose(log::postBreak)
