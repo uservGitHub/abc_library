@@ -56,6 +56,7 @@ private fun tsAandBs(){
             return "$t1 + $t2"
         }
     })
+    //val s = Observable.zip(sourceA,sourceB, BiFunction<String,String,String> { t1, t2 -> "$t1 + $t2" })
 
     gRx.excute(source)
 
