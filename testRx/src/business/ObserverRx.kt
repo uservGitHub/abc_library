@@ -22,6 +22,7 @@ class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Bool
         }
     }
 
+    fun dispose() = log.disposer?.dispose()
     fun pill(pillTag:Any,period:Int,it:Any):String {
         log.pillingThread("t${pillTag}")
         trySleep(period.toLong())
@@ -38,7 +39,12 @@ class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Bool
     fun excuteList(list: List<Observable<out Any>>){
         list.forEach { excute(it) }
     }
-    fun excute(source:Observable<out Any>) {
+
+    /**
+     * source:Observable<out Any>
+     * onNext:((Any)->Unit)? = null
+     */
+    fun excute(source:Observable<out Any>, onNext:((Any)->Unit)? = null) {
         updateSwitch.invoke()
         log.reset("single"){
             println("-->endAction")
@@ -48,7 +54,7 @@ class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Bool
         }
         source
                 .doOnDispose(log::postBreak)
-                .subscribe(log::preNext, log::preError, log::postComplete, log::preSubscribe)
+                .subscribe({log.preNext(it);onNext?.invoke(it)}, log::preError, log::postComplete, log::preSubscribe)
         if (ringTBreak > 0) {
             doBreak()
         }
@@ -58,10 +64,12 @@ class ObserverRx(val isFlow:Boolean=true,val isLogv:Boolean=true,val isPill:Bool
         log.switch(isFlow, isLogv, isPill)
     }
     private inline fun trySleep(millis: Long) {
-        try {
-            Thread.sleep(millis)
-        } catch (e: Exception) {
-            e.printStackTrace()
+        if (millis > 0) {
+            try {
+                Thread.sleep(millis)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
     private inline fun doBreak(){
